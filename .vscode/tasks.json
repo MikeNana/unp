@@ -1,0 +1,17 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build",
+            "type": "shell",
+            "command": "g++",
+            "args":[
+                "-g","-o","byte_order","byte_order.c","wraplib.c","wrapsock.c","wrapstdio.c","wrapunix.c","error.c"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        }
+    ]
+}
