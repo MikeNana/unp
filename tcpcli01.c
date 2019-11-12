@@ -1,3 +1,4 @@
+//version.1
 /*
 #include "unp.h"
 void str_cli(FILE* fp, int sockfd)
@@ -47,6 +48,7 @@ void str_cli(FILE* fp, int sockfd)
     return;
 }
 */
+//version.2
 //用shutdown和select修改，并且用的不是文本行处理，而是缓冲区处理的str_cli版本
 /*
 #include "unp.h"
