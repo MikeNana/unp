@@ -1,5 +1,5 @@
-#include "unp.h"
 /*
+#include "unp.h"
 void str_cli(FILE* fp, int sockfd)
 {
     char sendline[MAXLINE], recvline[MAXLINE];
@@ -48,6 +48,8 @@ void str_cli(FILE* fp, int sockfd)
 }
 */
 //用shutdown和select修改，并且用的不是文本行处理，而是缓冲区处理的str_cli版本
+/*
+#include "unp.h"
 void str_cli(FILE* fp, int sockfd)
 {
     int maxfdp1, stdineof;
@@ -107,4 +109,83 @@ int main(int argc, char** argv)
     }
     str_cli(stdin, sockfd[0]);
     exit(0);
+}
+*/
+
+//version.3
+//采用poll来替代select重写该服务器程序
+#include "unp.h"
+#include <limits.h>
+int main(int argc, char **argv)
+{
+    int i, maxi, sockfd, listenfd, connfd;
+    int nready;
+    ssize_t n;
+    char buf[MAXLINE];
+    struct sockaddr_in servaddr, cliaddr;
+    struct pollfd client[OPEN_MAX];
+    socklen_t clilen;
+    listenfd = Socket(AF_INET, SOCK_STREAM, 0);
+    bzero(&servaddr, sizeof(servaddr));
+    servaddr.sin_family = AF_INET;
+    servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
+    servaddr.sin_port = htons(SERV_PORT);
+    Bind(listenfd, (SA*)&servaddr, sizeof(servaddr));
+    Listen(listenfd, LISTENQ);
+    client[0].fd = listenfd;
+    client[0].events = POLLRDNORM;
+    for(i = 0; i < OPEN_MAX; ++i)
+        client[i].fd = -1;
+    maxi = 0;
+
+    for(;;)
+    {
+        nready = Poll(client, maxi+1, INFTIM);
+        if(client[0].revents & POLLRDNORM)
+        {
+            clilen = sizeof(cliaddr);
+            connfd = Accept(listenfd, (SA*)&cliaddr, &clilen);
+            for(i = 1; i < OPEN_MAX; ++i)
+            {
+                if(client[i].fd < 0)
+                {
+                    client[i].fd = connfd;
+                    break;
+                }
+            }
+            if(i == OPEN_MAX)
+                err_quit("too many clients.");
+            if(i > maxi)
+                maxi = i;
+            if(--nready <= 0)
+                continue;
+        }
+        for(i = 1; i < maxi; ++i)
+        {
+            if((sockfd = client[i].fd) < 0)
+                continue;
+            if(client[i].revents & (POLLRDNORM | POLLERR))
+            {
+                if((n = read(sockfd, buf, MAXLINE)) < 0)
+                {
+                    if(errno == ECONNRESET)
+                    {
+                        Close(sockfd);
+                        client[i].fd = -1;
+                    }
+                    else
+                        err_sys("read error");
+                }
+                else if(n == 0)
+                {
+                    Close(sockfd);
+                    client[i].fd = -1;
+                }
+                else
+                    Writen(sockfd, buf, n);
+                if(--nready <= 0)
+                    break;
+            }
+        }
+    }
 }
