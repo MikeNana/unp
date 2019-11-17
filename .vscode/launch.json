@@ -8,7 +8,7 @@
             "name": "(gdb) Launch",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/daytimetcpsrv",
+            "program": "${workspaceFolder}/tcp_udpserv01",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",

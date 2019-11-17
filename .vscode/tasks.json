@@ -6,7 +6,7 @@
             "type": "shell",
             "command": "g++",
             "args":[
-                "-g","-o","daytimetcpsrv","daytimetcpsrv.c","wraplib.c","wrapsock.c","wrapstdio.c","wrapunix.c","error.c"
+                "-g","-o","tcp_udpserv01","tcp_udpserv01.c","wraplib.c","wrapsock.c","wrapstdio.c","wrapunix.c","error.c"
             ],
             "group": {
                 "kind": "build",
