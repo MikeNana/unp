@@ -64,6 +64,7 @@ int main(int argc, char** argv)
 
 //version.2
 //使用单进程和select的TCP服务器，可避免多进程的开销，但仍然有问题
+/*
 #include "unp.h"
 int main(int argc, char ** argv)
 {
@@ -137,4 +138,43 @@ int main(int argc, char ** argv)
             }
         }
     }
+}
+*/
+
+//version.3 多线程版本的回射服务器
+#include "unpthread.h"
+static void* doit(void*);
+
+int main(int argc, char** argv)
+{
+    int listenfd, *iptr;
+    pthread_t tid;
+    socklen_t addrlen, len;
+    struct sockaddr *cliaddr;
+    if(argc == 2)
+        listenfd = Tcp_listen(NULL, argv[1], &addrlen);
+    else if(argc == 3)
+        listenfd = Tcp_listen(argv[1], argv[2], &addrlen);
+    else 
+        err_quit("usage: tcpserv01 [<host>] <service or port>");
+    cliaddr = Malloc(addrlen);
+    for(;;)
+    {
+        len = addrlen;
+        iptr = Malloc(sizeof(int));
+        *iptr = Accept(listenfd, cliaddr, &len);
+        Pthread_create(&tid, NULL, &doit, iptr);//注意:参数只能传指针，所以每次循环应该重新开辟一个指针的空间来存新的已连接描述符
+    }
+}
+
+static void* doit(void* arg)
+{
+    int connfd;
+    connfd = *((int*)arg);
+    free(arg);
+    
+    Pthread_detach(pthread_self());
+    str_echo(connfd);
+    Close(connfd);
+    return (NULL);
 }
